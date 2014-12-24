@@ -10,19 +10,24 @@ from pymongo import Connection
 from pymongo import ReadPreference
 from optparse import OptionParser
 
+
 def compute_signature(index):
     signature = index["ns"]
     for key in index["key"]:
         signature += "%s_%s" % (key, index["key"][key])
     return signature
 
+
 def get_collection_stats(database, collection):
     print "Checking DB: %s" % collection.full_name
     return database.command("collstats", collection.name)
 
+
 def get_cli_options():
-    parser = OptionParser(usage="usage: python %prog [options]",
-                          description="""This script prints some basic collection stats about the size of the collections and their indexes.""")
+    parser = OptionParser(
+        usage="usage: python %prog [options]",
+        description="""This script prints some basic collection stats about the size of the collections and their indexes."""
+    )
 
     parser.add_option("-H", "--host",
                       dest="host",
@@ -54,6 +59,7 @@ def get_cli_options():
 
     return options
 
+
 def get_connection(host, port, username, password):
     userPass = ""
     if username and password:
@@ -61,6 +67,7 @@ def get_connection(host, port, username, password):
 
     mongoURI = "mongodb://" + userPass + host + ":" + str(port)
     return Connection(host=mongoURI, read_preference=ReadPreference.SECONDARY)
+
 
 # From http://www.5dollarwhitebox.org/drupal/node/84
 def convert_bytes(bytes):
@@ -82,19 +89,24 @@ def convert_bytes(bytes):
         size = '%.2fb' % bytes
     return size
 
+
 def main(options):
     summary_stats = {
-        "count" : 0,
-        "size" : 0,
-        "indexSize" : 0
+        "count": 0,
+        "size": 0,
+        "indexSize": 0
     }
     all_stats = []
 
-    connection = get_connection(options.host, options.port, options.user, options.password)
+    connection = get_connection(
+        options.host,
+        options.port,
+        options.user,
+        options.password)
 
     all_db_stats = {}
 
-    databases= []
+    databases = []
     if options.database:
         databases.append(options.database)
     else:
@@ -116,13 +128,23 @@ def main(options):
             summary_stats["size"] += stats["size"]
             summary_stats["indexSize"] += stats.get("totalIndexSize", 0)
 
-    x = PrettyTable(["Collection", "Count", "% Size", "DB Size", "Avg Obj Size", "Indexes", "Index Size"])
-    x.align["Collection"]  = "l"
-    x.align["% Size"]  = "r"
-    x.align["Count"]  = "r"
-    x.align["DB Size"]  = "r"
-    x.align["Avg Obj Size"]  = "r"
-    x.align["Index Size"]  = "r"
+    x = PrettyTable(
+        [
+            "Collection",
+            "Count",
+            "% Size",
+            "DB Size",
+            "Avg Obj Size",
+            "Indexes",
+            "Index Size"
+        ]
+    )
+    x.align["Collection"] = "l"
+    x.align["% Size"] = "r"
+    x.align["Count"] = "r"
+    x.align["DB Size"] = "r"
+    x.align["Avg Obj Size"] = "r"
+    x.align["Index Size"] = "r"
     x.padding_width = 1
 
     print
@@ -132,11 +154,18 @@ def main(options):
         count = 0
         for stat in db_stats:
             count += stat["count"]
-            x.add_row([stat["ns"], stat["count"], "%0.1f%%" % ((stat["size"] / float(summary_stats["size"])) * 100),
-                       convert_bytes(stat["size"]),
-                       convert_bytes(stat.get("avgObjSize", 0)),
-                       stat.get("nindexes", 0),
-                       convert_bytes(stat.get("totalIndexSize", 0))])
+            x.add_row(
+                [
+                    stat["ns"],
+                    stat["count"],
+                    "%0.1f%%" % (
+                        (stat["size"] / float(summary_stats["size"])) * 100),
+                    convert_bytes(stat["size"]),
+                    convert_bytes(stat.get("avgObjSize", 0)),
+                    stat.get("nindexes", 0),
+                    convert_bytes(stat.get("totalIndexSize", 0))
+                ]
+            )
 
     print
     print x.get_string(sortby="% Size")

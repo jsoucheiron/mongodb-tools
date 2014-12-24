@@ -10,15 +10,18 @@ from pymongo import Connection
 from pymongo import ReadPreference
 from optparse import OptionParser
 
+
 def compute_signature(index):
     signature = index["ns"]
     for key in index["key"]:
         signature += "%s_%s" % (key, index["key"][key])
     return signature
 
+
 def get_collection_stats(database, collection):
     print "Checking DB: %s" % collection.full_name
     return database.command("collstats", collection.name)
+
 
 # From http://www.5dollarwhitebox.org/drupal/node/84
 def convert_bytes(bytes):
@@ -39,6 +42,7 @@ def convert_bytes(bytes):
     else:
         size = '%.2fb' % bytes
     return size
+
 
 def get_cli_options():
     parser = OptionParser(usage="usage: python %prog [options]",
@@ -74,6 +78,7 @@ def get_cli_options():
 
     return options
 
+
 def get_connection(host, port, username, password):
     userPass = ""
     if username and password:
@@ -82,15 +87,21 @@ def get_connection(host, port, username, password):
     mongoURI = "mongodb://" + userPass + host + ":" + str(port)
     return Connection(host=mongoURI, read_preference=ReadPreference.SECONDARY)
 
+
 def main(options):
     summary_stats = {
-        "count" : 0,
-        "size" : 0,
-        "indexSize" : 0
+        "count": 0,
+        "size": 0,
+        "indexSize": 0
     }
     all_stats = []
 
-    connection = get_connection(options.host, options.port, options.user, options.password)
+    connection = get_connection(
+        options.host,
+        options.port,
+        options.user,
+        options.password
+    )
 
     all_db_stats = {}
 
@@ -133,19 +144,22 @@ def main(options):
             count += stat["count"]
             for index in stat["indexSizes"]:
                 index_size = stat["indexSizes"].get(index, 0)
-                row = [stat["ns"], index,
-                          "%0.1f%%" % ((index_size / float(summary_stats["indexSize"])) * 100),
-                  convert_bytes(index_size)]
+                row = [
+                    stat["ns"], index,
+                    "%0.1f%%" % (
+                        (index_size / float(summary_stats["indexSize"])) * 100
+                    ),
+                    convert_bytes(index_size)
+                ]
                 index_size_mapping[index_size] = row
                 x.add_row(row)
-
 
     print "Index Overview"
     print x.get_string(sortby="Collection")
 
     print
     print "Top 5 Largest Indexes"
-    x = PrettyTable(["Collection", "Index","% Size", "Index Size"])
+    x = PrettyTable(["Collection", "Index", "% Size", "Index Size"])
     x.align["Collection"] = "l"
     x.align["Index"] = "l"
     x.align["% Size"] = "r"
