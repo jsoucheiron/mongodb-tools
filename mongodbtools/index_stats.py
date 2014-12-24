@@ -45,8 +45,10 @@ def convert_bytes(bytes):
 
 
 def get_cli_options():
-    parser = OptionParser(usage="usage: python %prog [options]",
-                          description="""This script prints some basic collection stats about the size of the collections and their indexes.""")
+    parser = OptionParser(
+        usage="usage: python %prog [options]",
+        description="""This script prints some basic collection stats about the size of the collections and their indexes."""
+    )
 
     parser.add_option("-H", "--host",
                       dest="host",
