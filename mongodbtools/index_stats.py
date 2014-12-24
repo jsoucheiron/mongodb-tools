@@ -6,7 +6,6 @@ collections and their indexes.
 """
 
 from prettytable import PrettyTable
-import psutil
 from pymongo import Connection
 from pymongo import ReadPreference
 from optparse import OptionParser
@@ -165,10 +164,14 @@ def main(options):
 
     # this is only meaningful if we're running the script on localhost
     if options.host == "localhost":
-        ram_headroom = psutil.phymem_usage()[0] - summary_stats["indexSize"]
-        print "RAM Headroom:", convert_bytes(ram_headroom)
-        print "RAM Used: %s (%s%%)" % (convert_bytes(psutil.phymem_usage()[1]), psutil.phymem_usage()[3])
-        print "Available RAM Headroom:", convert_bytes((100 - psutil.phymem_usage()[3]) / 100 * ram_headroom)
+        try:
+            import psutil
+            ram_headroom = psutil.phymem_usage()[0] - summary_stats["indexSize"]
+            print "RAM Headroom:", convert_bytes(ram_headroom)
+            print "RAM Used: %s (%s%%)" % (convert_bytes(psutil.phymem_usage()[1]), psutil.phymem_usage()[3])
+            print "Available RAM Headroom:", convert_bytes((100 - psutil.phymem_usage()[3]) / 100 * ram_headroom)
+        except ImportError:
+            print "Psutil not available, not printing RAM stats"
 
 if __name__ == "__main__":
     options = get_cli_options()
